@@ -110,6 +110,34 @@ void loadfunction() {
 
 }
 
+// --- إضافة دالة التحقق من السيرفر باستخدام الـ UDID ---
+void checkServerAndLoad() {
+    // جلب الـ UDID
+    NSString *udid = [[[UIDevice currentDevice] identifierForVendor] UUIDString];
+    // جلب المفتاح المحفوظ (إذا كنت تستخدم نظام إدخال مفتاح، يمكنك تعويضه هنا)
+    NSString *savedKey = [[NSUserDefaults standardUserDefaults] stringForKey:@"LicenseKey"] ?: @"NO_KEY";
+    
+    // الرابط الخاص بك
+    NSString *apiURL = [NSString stringWithFormat:@"http://HostDooN.xo.je/check.php?key=%@&udid=%@", savedKey, udid];
+    
+    dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+        NSError *error = nil;
+        NSString *response = [NSString stringWithContentsOfURL:[NSURL URLWithString:apiURL] encoding:NSUTF8StringEncoding error:&error];
+        
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if ([response containsString:@"YES"]) {
+                // إذا وافق السيرفر، يتم استدعاء دالة بناء المنيو الأصلية
+                loadmenu(); 
+            } else {
+                // إظهار رسالة خطأ إذا لم يوافق السيرفر
+                UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"خطأ في التفعيل" message:@"هذا الجهاز غير مفعل أو المفتاح خاطئ" preferredStyle:UIAlertControllerStyleAlert];
+                [alert addAction:[UIAlertAction actionWithTitle:@"حسناً" style:UIAlertActionStyleDefault handler:nil]];
+                [[UIApplication sharedApplication].keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
+            }
+        });
+    });
+}
+
 void loadmenu() {
 
 menu *cheat;
@@ -159,7 +187,8 @@ use case:
 if([menu gameVersion:@"version"])
 
 *******************************************/
-loadmenu();
+// استبدال استدعاء loadmenu المباشر بدالة فحص السيرفر
+checkServerAndLoad(); 
 });
 }
 
